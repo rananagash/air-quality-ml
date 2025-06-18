@@ -34,6 +34,19 @@ except ImportError:
     print("⚠️ TensorFlow not available. Deep learning models will be skipped.")
     print("   Install with: pip install tensorflow (requires Python < 3.12)")
 
+# Try to import PyTorch
+try:
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    import torch.optim as optim  # type: ignore
+    from torch.utils.data import DataLoader, TensorDataset  # type: ignore
+    PYTORCH_AVAILABLE = True
+    print("✅ PyTorch available for deep learning models")
+except ImportError:
+    PYTORCH_AVAILABLE = False
+    print("⚠️ PyTorch not available. PyTorch models will be skipped.")
+    print("   Install with: pip install torch torchvision")
+
 def main():
     print("🚀 Starting Air Quality Analysis...\n")
     
@@ -94,9 +107,9 @@ def main():
     print(f"Random Forest R²: {r2_score(y_test, y_pred_rf):.3f}")
     print(f"Random Forest RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_rf)):.2f}")
     
-    # Deep Learning Regression (if TensorFlow is available)
-    if TENSORFLOW_AVAILABLE:
-        print("\n🧠 Running deep learning regression...")
+    # Deep Learning Regression (if PyTorch is available)
+    if PYTORCH_AVAILABLE:
+        print("\n🧠 Running PyTorch deep learning regression...")
         
         # Normalize data for deep learning
         scaler = StandardScaler()
@@ -104,29 +117,53 @@ def main():
         
         X_train_dl, X_test_dl, y_train_dl, y_test_dl = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
         
-        # Define deep learning model
-        dl_model = Sequential([
-            Dense(64, activation='relu', input_shape=(np.array(X_train_dl).shape[1],)),
-            Dense(32, activation='relu'),
-            Dense(1)
-        ])
+        # Convert to PyTorch tensors
+        X_train_tensor = torch.FloatTensor(X_train_dl)
+        y_train_tensor = torch.FloatTensor(np.array(y_train_dl)).reshape(-1, 1)
+        X_test_tensor = torch.FloatTensor(X_test_dl)
+        y_test_tensor = torch.FloatTensor(np.array(y_test_dl)).reshape(-1, 1)
         
-        # Compile model
-        dl_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+        # Define PyTorch model
+        class AirQualityRegressor(nn.Module):
+            def __init__(self, input_size):
+                super(AirQualityRegressor, self).__init__()
+                self.layer1 = nn.Linear(input_size, 64)
+                self.layer2 = nn.Linear(64, 32)
+                self.layer3 = nn.Linear(32, 1)
+                self.relu = nn.ReLU()
+                
+            def forward(self, x):
+                x = self.relu(self.layer1(x))
+                x = self.relu(self.layer2(x))
+                x = self.layer3(x)
+                return x
+        
+        # Initialize model
+        model = AirQualityRegressor(X_train_tensor.shape[1])
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
         
         # Train model
-        print("Training deep learning model...")
-        dl_model.fit(X_train_dl, y_train_dl, epochs=50, batch_size=32, verbose=0)
+        print("Training PyTorch regression model...")
+        model.train()
+        for epoch in range(50):
+            optimizer.zero_grad()
+            outputs = model(X_train_tensor)
+            loss = criterion(outputs, y_train_tensor)
+            loss.backward()
+            optimizer.step()
         
         # Predict
-        y_pred_dl = dl_model.predict(X_test_dl).flatten()
+        model.eval()
+        with torch.no_grad():
+            y_pred_dl = model(X_test_tensor).numpy().flatten()
         
         # Evaluate
-        print(f"Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
-        print(f"Deep Learning RMSE: {np.sqrt(mean_squared_error(y_test_dl, y_pred_dl)):.2f}")
+        print(f"PyTorch Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
+        print(f"PyTorch Deep Learning RMSE: {np.sqrt(mean_squared_error(y_test_dl, y_pred_dl)):.2f}")
     else:
         y_pred_dl = None
-        print("Deep Learning: Skipped (TensorFlow not available)")
+        print("PyTorch Deep Learning: Skipped (PyTorch not available)")
     
     # Step 6: Classification analysis
     print("\n🏷️ Running classification analysis...")
@@ -157,7 +194,7 @@ def main():
     
     # Deep Learning Classification (if TensorFlow is available)
     if TENSORFLOW_AVAILABLE:
-        print("\n🧠 Running deep learning classification...")
+        print("\n🧠 Running TensorFlow deep learning classification...")
         
         # Prepare data for classification
         from sklearn.preprocessing import LabelEncoder
@@ -168,7 +205,7 @@ def main():
             X_scaled, y_class_encoded, test_size=0.2, random_state=42
         )
         
-        # Define classification model
+        # Define TensorFlow classification model
         dl_clf_model = Sequential([
             Dense(64, activation='relu', input_shape=(np.array(X_train_clf).shape[1],)),
             Dense(32, activation='relu'),
@@ -179,7 +216,7 @@ def main():
         dl_clf_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         
         # Train model
-        print("Training deep learning classification model...")
+        print("Training TensorFlow classification model...")
         dl_clf_model.fit(X_train_clf, y_train_clf, epochs=50, batch_size=32, verbose=0)
         
         # Predict
@@ -188,8 +225,10 @@ def main():
         y_pred_clf_dl_labels = le.inverse_transform(y_pred_clf_dl_classes)
         
         # Evaluate
-        print("Deep Learning Classification Report:")
+        print("TensorFlow Deep Learning Classification Report:")
         print(classification_report(y_test_clf, y_pred_clf_dl_classes, target_names=le.classes_))
+    else:
+        print("TensorFlow Deep Learning Classification: Skipped (TensorFlow not available)")
     
     # Step 7: Create visualizations
     print("\n📊 Creating visualizations...")
@@ -224,7 +263,10 @@ def main():
     axes[1, 0].scatter(y_test, y_pred_lr, alpha=0.6, label='Linear Regression', s=20)
     axes[1, 0].scatter(y_test, y_pred_rf, alpha=0.6, label='Random Forest', s=20)
     if y_pred_dl is not None:
-        axes[1, 0].scatter(y_test_dl, y_pred_dl, alpha=0.6, label='Deep Learning', s=20)
+        if PYTORCH_AVAILABLE:
+            axes[1, 0].scatter(y_test_dl, y_pred_dl, alpha=0.6, label='PyTorch Deep Learning', s=20)
+        else:
+            axes[1, 0].scatter(y_test_dl, y_pred_dl, alpha=0.6, label='Deep Learning', s=20)
     axes[1, 0].plot([np.min(y_test), np.max(y_test)], [np.min(y_test), np.max(y_test)], 'r--', lw=2)
     axes[1, 0].set_xlabel('Actual NO2')
     axes[1, 0].set_ylabel('Predicted NO2')
@@ -269,7 +311,10 @@ def main():
     print(f"   • Linear Regression R²: {r2_score(y_test, y_pred_lr):.3f}")
     print(f"   • Random Forest R²: {r2_score(y_test, y_pred_rf):.3f}")
     if y_pred_dl is not None:
-        print(f"   • Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
+        if PYTORCH_AVAILABLE:
+            print(f"   • PyTorch Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
+        else:
+            print(f"   • Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
     
     # Determine best model
     models = [
@@ -277,7 +322,10 @@ def main():
         ('Random Forest', r2_score(y_test, y_pred_rf))
     ]
     if y_pred_dl is not None:
-        models.append(('Deep Learning', r2_score(y_test_dl, y_pred_dl)))
+        if PYTORCH_AVAILABLE:
+            models.append(('PyTorch Deep Learning', r2_score(y_test_dl, y_pred_dl)))
+        else:
+            models.append(('Deep Learning', r2_score(y_test_dl, y_pred_dl)))
     
     best_model = max(models, key=lambda x: x[1])
     print(f"   • Best model: {best_model[0]} (R² = {best_model[1]:.3f})")
@@ -285,16 +333,27 @@ def main():
     print(f"\n🏷️ Classification Results:")
     print(f"   • Air quality categories: {', '.join(clf.classes_)}")
     print(f"   • Most common category: {df['AQI_Label'].mode().iloc[0]}")
+    if TENSORFLOW_AVAILABLE:
+        print(f"   • TensorFlow classification model available")
     
     print(f"\n🔍 Key Insights:")
     print(f"   • Most important feature: {feature_importance.iloc[-1]['feature']}")
     print(f"   • Average NO2 level: {df['NO2(GT)'].mean():.1f} µg/m³")
     print(f"   • NO2 range: {df['NO2(GT)'].min():.1f} - {df['NO2(GT)'].max():.1f} µg/m³")
     
-    if not TENSORFLOW_AVAILABLE:
-        print(f"\n💡 To enable deep learning models:")
-        print(f"   • Install TensorFlow: pip install tensorflow")
-        print(f"   • Note: Requires Python < 3.12")
+    print(f"\n🧠 Deep Learning Frameworks:")
+    if PYTORCH_AVAILABLE:
+        print(f"   • PyTorch: Used for regression (NO2 prediction)")
+    if TENSORFLOW_AVAILABLE:
+        print(f"   • TensorFlow/Keras: Used for classification (AQI categories)")
+    
+    if not PYTORCH_AVAILABLE or not TENSORFLOW_AVAILABLE:
+        print(f"\n💡 To enable all deep learning models:")
+        if not PYTORCH_AVAILABLE:
+            print(f"   • Install PyTorch: pip install torch torchvision")
+        if not TENSORFLOW_AVAILABLE:
+            print(f"   • Install TensorFlow: pip install tensorflow")
+            print(f"   • Note: TensorFlow requires Python < 3.12")
     
     print(f"\n✅ Analysis completed successfully!")
     print(f"📁 Results saved to: air_quality_analysis_results.png")
