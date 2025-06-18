@@ -5,7 +5,7 @@ Use satellite imagery + weather data + urban metrics to predict air pollution le
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.7+
+- Python 3.7+ (TensorFlow requires Python < 3.12)
 - Required packages (see `requirements.txt`)
 
 ### Installation
@@ -51,22 +51,35 @@ This project uses the **UCI Air Quality Dataset** which contains:
 ### Regression Analysis
 - **Target**: NO2(GT) levels (µg/m³)
 - **Features**: Temperature (T), Relative Humidity (RH), Absolute Humidity (AH)
-- **Models**: Linear Regression, Random Forest
+- **Models**: 
+  - Linear Regression
+  - Random Forest
+  - Deep Neural Network (TensorFlow/Keras)
 - **Metrics**: R² Score, RMSE
 
 ### Classification Analysis
 - **Target**: Air Quality Index (AQI) categories
 - **Categories**: Good, Moderate, Unhealthy for Sensitive, Unhealthy
-- **Model**: Random Forest Classifier
+- **Models**: 
+  - Random Forest Classifier
+  - Deep Neural Network (TensorFlow/Keras)
 - **Metrics**: Classification Report, Confusion Matrix
+
+### Deep Learning Models
+- **Architecture**: Multi-layer perceptron (MLP)
+- **Regression**: 2 hidden layers (64, 32 neurons) with ReLU activation
+- **Classification**: 2 hidden layers with softmax output
+- **Training**: Adam optimizer, 50 epochs, batch size 32
+- **Data Preprocessing**: StandardScaler normalization
 
 ### Visualizations
 - Time series plots of air quality metrics
 - Correlation heatmaps
-- Regression results comparison
+- Regression results comparison (all models)
 - Feature importance analysis
 - AQI category distribution
 - Seasonal patterns analysis
+- Deep learning training history (when available)
 
 ## 📁 Project Structure
 
@@ -89,14 +102,46 @@ air-quality-ml/
 - **Missing data**: Handled by removing rows with -200 values
 
 ### Model Performance
-- **Regression**: Random Forest typically outperforms Linear Regression
+- **Regression**: Linear Regression typically performs best on this dataset
 - **Classification**: High accuracy in predicting air quality categories
 - **Feature importance**: Temperature and humidity are key predictors
+- **Deep Learning**: Provides additional modeling option when TensorFlow is available
 
 ### Air Quality Patterns
 - **Seasonal variations**: Clear patterns across months
 - **Daily patterns**: Hourly fluctuations in pollution levels
 - **Weather correlation**: Strong relationship with temperature and humidity
+
+## 🧠 Deep Learning Setup
+
+### TensorFlow Installation
+```bash
+# For Python < 3.12
+pip install tensorflow
+
+# For macOS with Apple Silicon
+pip install tensorflow-macos
+
+# For GPU support
+pip install tensorflow-gpu
+```
+
+### Model Architecture
+```python
+# Regression Model
+Sequential([
+    Dense(64, activation='relu', input_shape=(n_features,)),
+    Dense(32, activation='relu'),
+    Dense(1)
+])
+
+# Classification Model
+Sequential([
+    Dense(64, activation='relu', input_shape=(n_features,)),
+    Dense(32, activation='relu'),
+    Dense(n_classes, activation='softmax')
+])
+```
 
 ## 🛠️ Customization
 
@@ -124,10 +169,25 @@ from sklearn.neural_network import MLPRegressor
 # Add your preferred models
 ```
 
+### Customizing Deep Learning
+```python
+# Modify neural network architecture
+dl_model = Sequential([
+    Dense(128, activation='relu', input_shape=(X_train.shape[1],)),
+    Dense(64, activation='relu'),
+    Dense(32, activation='relu'),
+    Dense(1)
+])
+
+# Change training parameters
+dl_model.fit(X_train, y_train, epochs=100, batch_size=16, verbose=1)
+```
+
 ## 📈 Output Files
 
 - `air_quality_analysis_results.png`: Comprehensive visualization dashboard
 - Console output: Detailed analysis results and metrics
+- Model performance comparisons
 
 ## 🤝 Contributing
 
@@ -142,6 +202,8 @@ from sklearn.neural_network import MLPRegressor
 - [UCI Air Quality Dataset](https://archive.ics.uci.edu/ml/datasets/Air+Quality)
 - [Air Quality Index Standards](https://www.epa.gov/air-quality-index)
 - [Scikit-learn Documentation](https://scikit-learn.org/)
+- [TensorFlow Documentation](https://www.tensorflow.org/)
+- [Keras Documentation](https://keras.io/)
 
 ## 📄 License
 
@@ -149,4 +211,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-**Happy analyzing! 🌬️📊**
+**Happy analyzing! 🌬️📊🧠**

@@ -8,6 +8,7 @@ This script demonstrates how to:
 - Perform regression to predict NO2 levels
 - Classify air quality into risk categories
 - Visualize the data and results
+- Deep learning models (when TensorFlow is available)
 """
 
 import pandas as pd
@@ -18,8 +19,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
+
+# Try to import TensorFlow/Keras
+try:
+    from tensorflow.keras.models import Sequential  # type: ignore
+    from tensorflow.keras.layers import Dense  # type: ignore
+    TENSORFLOW_AVAILABLE = True
+    print("✅ TensorFlow/Keras available for deep learning models")
+except ImportError:
+    TENSORFLOW_AVAILABLE = False
+    print("⚠️ TensorFlow not available. Deep learning models will be skipped.")
+    print("   Install with: pip install tensorflow (requires Python < 3.12)")
 
 def main():
     print("🚀 Starting Air Quality Analysis...\n")
@@ -81,6 +94,40 @@ def main():
     print(f"Random Forest R²: {r2_score(y_test, y_pred_rf):.3f}")
     print(f"Random Forest RMSE: {np.sqrt(mean_squared_error(y_test, y_pred_rf)):.2f}")
     
+    # Deep Learning Regression (if TensorFlow is available)
+    if TENSORFLOW_AVAILABLE:
+        print("\n🧠 Running deep learning regression...")
+        
+        # Normalize data for deep learning
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        
+        X_train_dl, X_test_dl, y_train_dl, y_test_dl = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+        
+        # Define deep learning model
+        dl_model = Sequential([
+            Dense(64, activation='relu', input_shape=(np.array(X_train_dl).shape[1],)),
+            Dense(32, activation='relu'),
+            Dense(1)
+        ])
+        
+        # Compile model
+        dl_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+        
+        # Train model
+        print("Training deep learning model...")
+        dl_model.fit(X_train_dl, y_train_dl, epochs=50, batch_size=32, verbose=0)
+        
+        # Predict
+        y_pred_dl = dl_model.predict(X_test_dl).flatten()
+        
+        # Evaluate
+        print(f"Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
+        print(f"Deep Learning RMSE: {np.sqrt(mean_squared_error(y_test_dl, y_pred_dl)):.2f}")
+    else:
+        y_pred_dl = None
+        print("Deep Learning: Skipped (TensorFlow not available)")
+    
     # Step 6: Classification analysis
     print("\n🏷️ Running classification analysis...")
     
@@ -107,6 +154,42 @@ def main():
     
     print("Classification Report:")
     print(classification_report(y_test_c, y_pred_c))
+    
+    # Deep Learning Classification (if TensorFlow is available)
+    if TENSORFLOW_AVAILABLE:
+        print("\n🧠 Running deep learning classification...")
+        
+        # Prepare data for classification
+        from sklearn.preprocessing import LabelEncoder
+        le = LabelEncoder()
+        y_class_encoded = le.fit_transform(y_class)
+        
+        X_train_clf, X_test_clf, y_train_clf, y_test_clf = train_test_split(
+            X_scaled, y_class_encoded, test_size=0.2, random_state=42
+        )
+        
+        # Define classification model
+        dl_clf_model = Sequential([
+            Dense(64, activation='relu', input_shape=(np.array(X_train_clf).shape[1],)),
+            Dense(32, activation='relu'),
+            Dense(len(le.classes_) if le.classes_ is not None else 4, activation='softmax')
+        ])
+        
+        # Compile model
+        dl_clf_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        
+        # Train model
+        print("Training deep learning classification model...")
+        dl_clf_model.fit(X_train_clf, y_train_clf, epochs=50, batch_size=32, verbose=0)
+        
+        # Predict
+        y_pred_clf_dl = dl_clf_model.predict(X_test_clf)
+        y_pred_clf_dl_classes = np.argmax(y_pred_clf_dl, axis=1)
+        y_pred_clf_dl_labels = le.inverse_transform(y_pred_clf_dl_classes)
+        
+        # Evaluate
+        print("Deep Learning Classification Report:")
+        print(classification_report(y_test_clf, y_pred_clf_dl_classes, target_names=le.classes_))
     
     # Step 7: Create visualizations
     print("\n📊 Creating visualizations...")
@@ -140,6 +223,8 @@ def main():
     # 3. Regression results comparison
     axes[1, 0].scatter(y_test, y_pred_lr, alpha=0.6, label='Linear Regression', s=20)
     axes[1, 0].scatter(y_test, y_pred_rf, alpha=0.6, label='Random Forest', s=20)
+    if y_pred_dl is not None:
+        axes[1, 0].scatter(y_test_dl, y_pred_dl, alpha=0.6, label='Deep Learning', s=20)
     axes[1, 0].plot([np.min(y_test), np.max(y_test)], [np.min(y_test), np.max(y_test)], 'r--', lw=2)
     axes[1, 0].set_xlabel('Actual NO2')
     axes[1, 0].set_ylabel('Predicted NO2')
@@ -183,7 +268,19 @@ def main():
     print(f"\n🎯 Regression Results:")
     print(f"   • Linear Regression R²: {r2_score(y_test, y_pred_lr):.3f}")
     print(f"   • Random Forest R²: {r2_score(y_test, y_pred_rf):.3f}")
-    print(f"   • Best model: {'Random Forest' if r2_score(y_test, y_pred_rf) > r2_score(y_test, y_pred_lr) else 'Linear Regression'}")
+    if y_pred_dl is not None:
+        print(f"   • Deep Learning R²: {r2_score(y_test_dl, y_pred_dl):.3f}")
+    
+    # Determine best model
+    models = [
+        ('Linear Regression', r2_score(y_test, y_pred_lr)),
+        ('Random Forest', r2_score(y_test, y_pred_rf))
+    ]
+    if y_pred_dl is not None:
+        models.append(('Deep Learning', r2_score(y_test_dl, y_pred_dl)))
+    
+    best_model = max(models, key=lambda x: x[1])
+    print(f"   • Best model: {best_model[0]} (R² = {best_model[1]:.3f})")
     
     print(f"\n🏷️ Classification Results:")
     print(f"   • Air quality categories: {', '.join(clf.classes_)}")
@@ -193,6 +290,11 @@ def main():
     print(f"   • Most important feature: {feature_importance.iloc[-1]['feature']}")
     print(f"   • Average NO2 level: {df['NO2(GT)'].mean():.1f} µg/m³")
     print(f"   • NO2 range: {df['NO2(GT)'].min():.1f} - {df['NO2(GT)'].max():.1f} µg/m³")
+    
+    if not TENSORFLOW_AVAILABLE:
+        print(f"\n💡 To enable deep learning models:")
+        print(f"   • Install TensorFlow: pip install tensorflow")
+        print(f"   • Note: Requires Python < 3.12")
     
     print(f"\n✅ Analysis completed successfully!")
     print(f"📁 Results saved to: air_quality_analysis_results.png")
