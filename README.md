@@ -2,7 +2,7 @@
 
 A comprehensive analysis of the UCI Air Quality dataset using multiple machine learning approaches, including **both PyTorch and TensorFlow** for deep learning models.
 
-## 🚀 Features
+## Features
 
 - **Data Preprocessing**: Clean and prepare air quality data
 - **Regression Analysis**: Predict NO₂ levels using multiple algorithms
@@ -13,7 +13,7 @@ A comprehensive analysis of the UCI Air Quality dataset using multiple machine l
 - **Visualization**: Interactive plots and analysis results
 - **Model Comparison**: Compare performance across different algorithms
 
-## 🧠 Dual Framework Approach
+## Dual Framework Approach
 
 This project demonstrates versatility by using both major deep learning frameworks:
 
@@ -25,14 +25,14 @@ This approach showcases:
 - Understanding of framework-specific strengths
 - Ability to compare and choose appropriate tools for specific tasks
 
-## 📊 Dataset
+## Dataset
 
 UCI Air Quality Dataset containing:
 - Temperature, Humidity, Absolute Humidity
 - NO₂, CO, NOx levels
 - Time series data from 2004-2005
 
-## 🛠️ Installation
+## 🛠Installation
 
 ```bash
 # Clone the repository
@@ -43,7 +43,7 @@ cd air-quality-ml
 pip install -r requirements.txt
 ```
 
-## 📋 Requirements
+## Requirements
 
 - Python 3.8+
 - pandas, numpy, matplotlib, seaborn
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 - **PyTorch** (for regression models)
 - **TensorFlow** (for classification models)
 
-## 🎯 Usage
+## Usage
 
 ### Run the complete analysis:
 ```bash
@@ -63,7 +63,7 @@ python air_quality_analysis.py
 jupyter notebook air_quality_analysis.ipynb
 ```
 
-## 📈 Results
+## Results
 
 The analysis provides:
 - Regression models (Linear, Random Forest, PyTorch Deep Learning)
@@ -72,7 +72,7 @@ The analysis provides:
 - Performance comparisons
 - Interactive visualizations
 
-## 🎓 Learning Outcomes
+## Learning Outcomes
 
 This project demonstrates:
 - **Data Science Workflow**: From data loading to model deployment
@@ -81,7 +81,7 @@ This project demonstrates:
 - **Model Evaluation**: Comprehensive performance analysis
 - **Visualization Skills**: Creating informative plots and dashboards
 
-## 📝 Project Structure
+## Project Structure
 
 ```
 air-quality-ml/
@@ -93,27 +93,16 @@ air-quality-ml/
     └── AirQualityUCI.csv       # UCI Air Quality dataset
 ```
 
-## 🔧 Customization
+## Customization
 
 - Modify feature selection in the script
 - Adjust model hyperparameters
 - Add new visualization types
 - Extend with additional ML algorithms
 
-## 📊 Sample Output
+## Sample Output
 
 The script generates:
 - Console output with model performance metrics
 - `air_quality_analysis_results.png` with comprehensive visualizations
 - Detailed analysis summary
-
-## 🎯 Resume Enhancement
-
-This project showcases:
-- **Technical Skills**: Python, ML, Deep Learning, Data Analysis
-- **Framework Knowledge**: PyTorch, TensorFlow, Scikit-learn
-- **Problem-Solving**: End-to-end ML pipeline development
-- **Data Visualization**: Creating meaningful insights from data
-- **Project Management**: Organizing and documenting code
-
-Perfect for data science, ML engineering, or analytics roles!
